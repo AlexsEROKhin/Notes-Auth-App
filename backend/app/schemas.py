@@ -21,3 +21,17 @@ class UserLogin(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
+
+class NoteCreate(BaseModel):
+    title: str
+    content: str | None = None
+
+
+class NoteResponse(BaseModel):
+    id: int
+    title: str
+    content: str | None = None
+    owner_id: int
+
+    class Config:
+        from_attributes = True

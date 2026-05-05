@@ -4,7 +4,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from .auth import hash_password, verify_password, create_access_token, decode_access_token
 from .database import Base, engine, get_db
-from .schemas import UserCreate, UserResponse, UserLogin, TokenResponse
+from .schemas import UserCreate, UserResponse, UserLogin, TokenResponse, NoteCreate, NoteResponse
 from . import models
 
 app = FastAPI()
@@ -80,3 +80,51 @@ def get_me(current_user: models.User = Depends(get_current_user)):
         "id": current_user.id,
         "email": current_user.email
     }
+
+@app.post("/notes", response_model=NoteResponse)
+def create_note(
+    note: NoteCreate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    new_note = models.Note(
+        title=note.title,
+        content=note.content,
+        owner_id=current_user.id,
+    )
+
+    db.add(new_note)
+    db.commit()
+    db.refresh(new_note)
+
+    return new_note
+
+
+@app.get("/notes", response_model=list[NoteResponse])
+def get_notes(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    notes = db.query(models.Note).filter(models.Note.owner_id == current_user.id).all()
+    return notes
+
+
+@app.delete("/notes/{note_id}")
+def delete_note(
+    note_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    note = (
+        db.query(models.Note)
+        .filter(models.Note.id == note_id, models.Note.owner_id == current_user.id)
+        .first()
+    )
+
+    if note is None:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    db.delete(note)
+    db.commit()
+
+    return {"deleted": note_id}
