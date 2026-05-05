@@ -104,3 +104,100 @@ logoutBtn.addEventListener("click", function () {
   notesList.innerHTML = "";
   showMessage("Logged out");
 });
+noteForm.addEventListener("submit", async function (event) {
+  event.preventDefault();
+
+  if (!token) {
+    showMessage("Please login first");
+    return;
+  }
+
+  const response = await fetch(`${API_URL}/notes`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      title: noteTitle.value,
+      content: noteContent.value
+    })
+  });
+
+  if (!response.ok) {
+    showMessage("Could not create note");
+    return;
+  }
+
+  noteForm.reset();
+  showMessage("Note created");
+  loadNotes();
+});
+
+
+loadNotesBtn.addEventListener("click", function () {
+  loadNotes();
+});
+
+
+async function loadNotes() {
+  if (!token) {
+    showMessage("Please login first");
+    return;
+  }
+
+  const response = await fetch(`${API_URL}/notes`, {
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    showMessage("Could not load notes");
+    return;
+  }
+
+  const notes = await response.json();
+
+  notesList.innerHTML = "";
+
+  for (let i = 0; i < notes.length; i++) {
+    const note = notes[i];
+
+    const li = document.createElement("li");
+    li.textContent = note.title + ": " + (note.content || "");
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "Delete";
+
+    deleteBtn.addEventListener("click", function () {
+      deleteNote(note.id);
+    });
+
+    li.appendChild(deleteBtn);
+    notesList.appendChild(li);
+  }
+}
+
+
+async function deleteNote(noteId) {
+  if (!token) {
+    showMessage("Please login first");
+    return;
+  }
+
+  const response = await fetch(`${API_URL}/notes/${noteId}`, {
+    method: "DELETE",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    showMessage("Could not delete note");
+    return;
+  }
+
+  showMessage("Note deleted");
+  loadNotes();
+}
