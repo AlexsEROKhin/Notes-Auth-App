@@ -5,3 +5,5 @@ passlib[bcrypt]
 bcrypt==4.0.1
 pydantic[email]
 python-jose[cryptography]
+pytest
+httpx
