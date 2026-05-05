@@ -6,8 +6,16 @@ from .auth import hash_password, verify_password, create_access_token, decode_ac
 from .database import Base, engine, get_db
 from .schemas import UserCreate, UserResponse, UserLogin, TokenResponse, NoteCreate, NoteResponse
 from . import models
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 security = HTTPBearer()
 
